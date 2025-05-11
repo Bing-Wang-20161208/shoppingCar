@@ -83,6 +83,7 @@ const CartItem = ({ productInfo, handleDeleteCart, handleCheckCart }: CartItemPr
             </div>
             <div className={styles.bottom}>
                 <span className={styles.delete} onClick={handleDelete}>移除</span>
+                {productInfo.disabled ? <span className={styles.disabledReason}>已下架或已购买</span> : ''}
                 <div className={styles.itemCount}>
                     {ELIC_OPTION[productInfo.licType]}
                     <span className={styles.price}>{productInfo.price}</span>
