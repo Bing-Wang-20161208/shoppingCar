@@ -1,0 +1,43 @@
+.cartDrawer {
+  .drawerTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .text {
+      line-height: 36px;
+      font-size: 24px;
+      font-weight: normal;
+    }
+    .icon {
+      font-size: 20px;
+      cursor: pointer;
+    }
+  }
+  :global {
+    .ant-drawer-header {
+      border: none;
+      padding: 36px 40px 32px;
+    }
+    .ant-drawer-body {
+      padding: 0;
+    }
+    .ant-tabs,
+    .ant-tabs-content,
+    .ant-tabs-tabpane {
+      height: 100%;
+    }
+    .ant-tabs-nav {
+      padding: 0 40px;
+      &::before {
+        left: 40px;
+        right: 60px;
+      }
+    }
+    .ant-tabs-ink-bar {
+      height: 3px;
+    }
+    .ant-tabs-tab {
+      padding-top: 0 !important;
+    }
+  }
+}
