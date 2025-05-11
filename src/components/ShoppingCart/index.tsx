@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Drawer, Tabs } from 'antd';
-import { EProductStatus, EProductType, IBuyHistoryVideo, type IImageProduct, type IMusicProduct, type IVideoProduct } from '@/types';
+import { ELicType, EProductStatus, EProductType, IBuyHistoryImage, IBuyHistoryMusic, IBuyHistoryVideo, type IImageProduct, type IMusicProduct, type IVideoProduct } from '@/types';
 import styles from './index.module.less';
 import CartTab from './CartTab';
 import { CloseOutlined } from '@ant-design/icons';
 import { type TProduct } from './CartItem';
 import request from '@/http';
+
+type TBuyProduct = IBuyHistoryVideo & IBuyHistoryImage & IBuyHistoryMusic;
 
 interface ShoppingCartProps {
     visible: boolean;
@@ -25,6 +27,32 @@ const PRODUCT_TYPE_OPTIONS = [
     { label: '图片', value: EProductType.IMAGE },
     { label: '音乐', value: EProductType.MUSIC },
 ]
+
+/** 根据授权类型计算价格 */
+const getTotalPrice = (product: TProduct) => {
+    const { licType, price } = product;
+    let totalPrice = price;
+    if (licType === ELicType.LP) {
+        totalPrice *= 4;
+    } else if (licType === ELicType.LPPLUS) {
+        totalPrice *= 10;
+    }
+    return totalPrice;
+}
+/** 
+ * 判断是否购买过素材
+ * 1.购买过同类型
+ * 2.购买过企业PLUS，现有购买企业（不包含个人）
+ */
+const isBuy = (idType: 'vid' | 'fid' | 'mid', product: TProduct, buyList: TBuyProduct[]) =>
+    buyList.some(b =>
+        b[idType] === product[idType] &&
+        (
+            b.licTypes.includes(product.licType) ||
+            b.licTypes.includes(ELicType.LPPLUS) &&
+            product.licType === ELicType.LP
+        )
+    );
 
 const ShoppingCart: React.FC<ShoppingCartProps> = ({ visible, onClose, setTotalCount }) => {
     const [productCollection, setProductCollection] = useState<IProductCollection>({
@@ -49,8 +77,10 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ visible, onClose, setTotalC
             });
             const videoFormatList: IVideoProduct[] = videoList.map(v => ({
                 ...v,
+                totalPrice: getTotalPrice(v),
+                isBuy: isBuy('vid', v, buyVideoList),
                 checked: false,
-                disabled: v.auditStatus !== EProductStatus.SUCCESS || buyVideoList.some(b => b.vid === v.vid && b.licTypes.includes(v.licType)),
+                disabled: v.auditStatus === EProductStatus.FAIL,
             }))
             setProductCollection(prev => ({ ...prev, [EProductType.VIDEO]: videoFormatList }));
         } else {
@@ -72,8 +102,10 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ visible, onClose, setTotalC
             })
             const imageFormatList: IImageProduct[] = imageList.map(v => ({
                 ...v,
+                totalPrice: getTotalPrice(v),
+                isBuy: isBuy('vid', v, buyImageList),
                 checked: false,
-                disabled: v.auditStatus !== EProductStatus.SUCCESS || buyImageList.some(b => b.vid === v.fid && b.licTypes.includes(v.licType)),
+                disabled: v.auditStatus === EProductStatus.FAIL,
             }))
             setProductCollection(prev => ({ ...prev, [EProductType.IMAGE]: imageFormatList }));
         }
@@ -93,8 +125,10 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ visible, onClose, setTotalC
             })
             const musicFormatList: IMusicProduct[] = musicList.map(v => ({
                 ...v,
+                totalPrice: getTotalPrice(v),
+                isBuy: isBuy('vid', v, buyMusicList),
                 checked: false,
-                disabled: v.auditStatus !== EProductStatus.SUCCESS || buyMusicList.some(b => b.vid === v.mid && b.licTypes.includes(v.licType)),
+                disabled: v.auditStatus === EProductStatus.FAIL,
             }))
             setProductCollection(prev => ({ ...prev, [EProductType.MUSIC]: musicFormatList }));
         } else {
@@ -120,6 +154,16 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ visible, onClose, setTotalC
         }
     }, [visible]);
 
+
+    // 切换tab
+    const handleTabChange = () => {
+        // 切换tab后状态不保留
+        setProductCollection(prev => ({
+            [EProductType.VIDEO]: prev[EProductType.VIDEO].map(v => ({ ...v, checked: false })),
+            [EProductType.IMAGE]: prev[EProductType.IMAGE].map(v => ({ ...v, checked: false })),
+            [EProductType.MUSIC]: prev[EProductType.MUSIC].map(v => ({ ...v, checked: false })),
+        }))
+    }
 
     // 更新购物车
     const updateCarts = (type: EProductType, products: TProduct[]) => {
@@ -166,6 +210,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ visible, onClose, setTotalC
                     key: p.value,
                     children: <CartTab type={p.value} products={productCollection[p.value]} updateCarts={updateCarts} />,
                 }))}
+                onChange={handleTabChange}
             />
         </Drawer>
     );

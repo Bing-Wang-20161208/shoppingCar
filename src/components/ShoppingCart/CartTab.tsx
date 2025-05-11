@@ -15,7 +15,7 @@ const CartTab = ({ type, products, updateCarts }: CartItemProps) => {
     /** 已选的products */
     const checkedProducts = products.filter(item => item.checked);
     /** 已选总金额 */
-    const totalPrice = useMemo(() => checkedProducts.reduce((acc, cur) => acc + cur.price, 0), [checkedProducts])
+    const totalPrice = useMemo(() => checkedProducts.reduce((acc, cur) => acc + cur.totalPrice, 0), [checkedProducts])
     /** 全选 */
     const allChecked = checkedProducts.length === products.length;
     /** 部分选中 */

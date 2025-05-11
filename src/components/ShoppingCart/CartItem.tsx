@@ -1,5 +1,5 @@
 import { type MouseEventHandler } from "react";
-import { ELicType, EProductType, type IImageProduct, type IMusicProduct, type IVideoProduct } from "@/types";
+import { ELicType, EProductStatus, EProductType, type IImageProduct, type IMusicProduct, type IVideoProduct } from "@/types";
 
 import styles from './CartItem.module.less';
 import { Checkbox, Divider, Image, Space, Typography } from "antd";
@@ -44,13 +44,19 @@ const CartItem = ({ productInfo, handleDeleteCart, handleCheckCart }: CartItemPr
     }
 
     // 不同类型的图片尺寸不同
-    const renderImage = () =>
-        productType === EProductType.VIDEO
-            ? <Image width={117} height={68} src={productInfo.coverImage} alt={productInfo.title} preview={false} />
+    const renderImage = () => {
+        const style = productType === EProductType.VIDEO
+            ? { width: '117px', height: '68px' }
             : productType === EProductType.IMAGE
-                ? <Image width={99} height={66} src={productInfo.coverImage} alt={productInfo.title} preview={false} />
-                : <Image width={66} height={66} src={productInfo.coverImage} alt={productInfo.title} preview={false} />;
-
+                ? { width: '99px', height: '66px' }
+                : { width: '66px', height: '66px' };
+        return (
+            <div className={styles.coverImage} style={style}>
+                <Image src={productInfo.coverImage} alt={productInfo.title} preview={false} />
+                {productInfo.auditStatus === EProductStatus.FAIL ? <div className={styles.maskStatusFail}>已下架</div> : ''}
+            </div>
+        )
+    }
 
     return (
         <div className={styles.cartItem} onClick={handleDetail}>
@@ -82,11 +88,13 @@ const CartItem = ({ productInfo, handleDeleteCart, handleCheckCart }: CartItemPr
                 </div>
             </div>
             <div className={styles.bottom}>
-                <span className={styles.delete} onClick={handleDelete}>移除</span>
-                {productInfo.disabled ? <span className={styles.disabledReason}>已下架或已购买</span> : ''}
+                <div>
+                    <span className={styles.delete} onClick={handleDelete}>移除</span>
+                    {productInfo.isBuy ? <span className={styles.disabledReason}>您已购买过此素材 &gt;</span> : ''}
+                </div>
                 <div className={styles.itemCount}>
                     {ELIC_OPTION[productInfo.licType]}
-                    <span className={styles.price}>{productInfo.price}</span>
+                    <span className={styles.price}>{productInfo.totalPrice}</span>
                     元
                 </div>
             </div>
